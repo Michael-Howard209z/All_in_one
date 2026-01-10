@@ -1,17 +1,41 @@
 <resources xmlns:tools="http://schemas.android.com/tools">
     <!-- Base application theme. -->
     <style name="Theme.AppXamL" parent="Theme.Material3.DayNight.NoActionBar">
-        <!-- Primary brand color. -->
+        <!-- Default colors -->
         <item name="colorPrimary">@color/purple_500</item>
-        <item name="colorPrimaryVariant">@color/purple_700</item>
-        <item name="colorOnPrimary">@color/white</item>
-        <!-- Secondary brand color. -->
-        <item name="colorSecondary">@color/teal_200</item>
-        <item name="colorSecondaryVariant">@color/teal_700</item>
-        <item name="colorOnSecondary">@color/black</item>
-        <!-- Status bar color. -->
-        <item name="android:statusBarColor">?attr/colorPrimaryVariant</item>
-        <!-- Customize your theme here. -->
+        <item name="android:statusBarColor">?attr/colorSurface</item>
+        <item name="android:windowLightStatusBar">true</item>
+    </style>
+
+    <!-- Specific Theme Overlays -->
+    <style name="Theme.AppXamL.Purple" parent="Theme.AppXamL">
+        <item name="colorPrimary">#673AB7</item>
+        <item name="colorPrimaryContainer">#EADDFF</item>
+        <item name="colorOnPrimaryContainer">#21005D</item>
+    </style>
+
+    <style name="Theme.AppXamL.Blue" parent="Theme.AppXamL">
+        <item name="colorPrimary">#2196F3</item>
+        <item name="colorPrimaryContainer">#D1E4FF</item>
+        <item name="colorOnPrimaryContainer">#001D36</item>
+    </style>
+
+    <style name="Theme.AppXamL.Green" parent="Theme.AppXamL">
+        <item name="colorPrimary">#4CAF50</item>
+        <item name="colorPrimaryContainer">#CCF2D1</item>
+        <item name="colorOnPrimaryContainer">#002108</item>
+    </style>
+
+    <style name="Theme.AppXamL.Orange" parent="Theme.AppXamL">
+        <item name="colorPrimary">#FF9800</item>
+        <item name="colorPrimaryContainer">#FFDDB3</item>
+        <item name="colorOnPrimaryContainer">#291800</item>
+    </style>
+
+    <style name="Theme.AppXamL.Red" parent="Theme.AppXamL">
+        <item name="colorPrimary">#F44336</item>
+        <item name="colorPrimaryContainer">#FFDAD6</item>
+        <item name="colorOnPrimaryContainer">#410002</item>
     </style>
 
     <style name="ShapeAppearance.InfoPanel" parent="ShapeAppearance.Material3.MediumComponent">

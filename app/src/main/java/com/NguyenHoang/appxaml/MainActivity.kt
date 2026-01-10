@@ -1,6 +1,7 @@
 package com.NguyenHoang.appxaml
 
 import android.content.Context
+import android.content.Intent
 import android.content.SharedPreferences
 import android.hardware.camera2.CameraManager
 import android.os.Bundle
@@ -9,14 +10,12 @@ import android.os.Looper
 import android.view.View
 import android.view.animation.OvershootInterpolator
 import android.widget.TextView
-import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AlertDialog
 import com.google.android.material.button.MaterialButton
 import com.google.android.material.card.MaterialCardView
-import java.lang.Exception 
-import android.content.Intent
-import androidx.appcompat.app.AlertDialog
+import java.lang.Exception
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private var isFlashOn = false
     private lateinit var cameraManager: CameraManager
@@ -24,6 +23,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var btnFlash: MaterialButton
     private lateinit var txtStatus: TextView
     private lateinit var btnPremium: MaterialButton
+    private lateinit var btnSettings: MaterialButton
 
     private lateinit var btnInfor: MaterialButton
     private lateinit var infoPanel: MaterialCardView
@@ -46,12 +46,16 @@ class MainActivity : AppCompatActivity() {
     }
 
     private val PREFS_NAME = "FlashlightPrefs"
-    private val KEY_IS_PREMIUM = "is_premium"
+    private val KEY_IS_LIFETIME = "is_premium_lifetime"
+    private val KEY_EXPIRY_TIME = "premium_expiry_time"
     private val FLASH_LIMIT_MS = 15000L // 15 giây
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
+
+        // Khởi tạo SharedPreferences
+        sharedPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         // Khởi tạo views
         btnFlash = findViewById(R.id.btnFlash)
@@ -61,6 +65,7 @@ class MainActivity : AppCompatActivity() {
         infoPanel = findViewById(R.id.infoPanel)
         btnCloseInfo = findViewById(R.id.btnCloseInfo)
         viewDim = findViewById(R.id.viewDim)
+        btnSettings = findViewById(R.id.btnSettings)
 
         // Khởi tạo Camera
         cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
@@ -71,9 +76,6 @@ class MainActivity : AppCompatActivity() {
             return
         }
         cameraId = cameraIds[0]
-
-        // Khởi tạo SharedPreferences
-        sharedPrefs = getSharedPreferences(PREFS_NAME, Context.MODE_PRIVATE)
 
         // Hiển thị hộp thoại Premium khi ứng dụng bắt đầu
         if (!isPremium()) {
@@ -92,7 +94,12 @@ class MainActivity : AppCompatActivity() {
             startActivity(Intent(this, PremiumActivity::class.java))
         }
 
-        // Logic trượt panel thông tin nâng cao (Material 3 Style)
+        // Mở màn hình Settings
+        btnSettings.setOnClickListener {
+            startActivity(Intent(this, SettingsActivity::class.java))
+        }
+
+        // Logic trượt panel thông tin
         btnInfor.setOnClickListener {
             showInfoPanel()
         }
@@ -108,30 +115,13 @@ class MainActivity : AppCompatActivity() {
 
     private fun showInfoPanel() {
         viewDim.visibility = View.VISIBLE
-        viewDim.animate()
-            .alpha(1f)
-            .setDuration(400)
-            .start()
-
-        infoPanel.animate()
-            .translationX(0f)
-            .setDuration(500)
-            .setInterpolator(OvershootInterpolator(0.7f)) // Tạo độ nhún (bounce)
-            .start()
+        viewDim.animate().alpha(1f).setDuration(400).start()
+        infoPanel.animate().translationX(0f).setDuration(500).setInterpolator(OvershootInterpolator(0.7f)).start()
     }
 
     private fun hideInfoPanel() {
-        viewDim.animate()
-            .alpha(0f)
-            .setDuration(300)
-            .withEndAction { viewDim.visibility = View.GONE }
-            .start()
-
-        infoPanel.animate()
-            .translationX(-infoPanel.width.toFloat())
-            .setDuration(400)
-            .setInterpolator(null)
-            .start()
+        viewDim.animate().alpha(0f).setDuration(300).withEndAction { viewDim.visibility = View.GONE }.start()
+        infoPanel.animate().translationX(-infoPanel.width.toFloat()).setDuration(400).setInterpolator(null).start()
     }
 
     private fun updateUiForInitialState() {
@@ -147,12 +137,13 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun isPremium(): Boolean {
-        return sharedPrefs.getBoolean(KEY_IS_PREMIUM, false)
+        if (sharedPrefs.getBoolean(KEY_IS_LIFETIME, false)) return true
+        val expiryTime = sharedPrefs.getLong(KEY_EXPIRY_TIME, 0L)
+        return System.currentTimeMillis() < expiryTime
     }
 
     private fun toggleFlashlight(on: Boolean) {
         if (on == isFlashOn) return
-
         isFlashOn = on
         try {
             cameraManager.setTorchMode(cameraId, isFlashOn)
@@ -166,13 +157,11 @@ class MainActivity : AppCompatActivity() {
             btnFlash.text = "TẮT"
             btnFlash.setIconResource(R.drawable.ic_flash_on)
             txtStatus.text = "ĐÈN PIN ĐANG BẬT"
-
             if (!isPremium()) {
                 handler.postDelayed(limitFlashlightRunnable, FLASH_LIMIT_MS)
             }
         } else {
             handler.removeCallbacks(limitFlashlightRunnable)
-
             btnFlash.text = "BẬT"
             btnFlash.setIconResource(R.drawable.ic_flash_off)
             txtStatus.text = "Đèn pin đang tắt"
@@ -182,21 +171,22 @@ class MainActivity : AppCompatActivity() {
     private fun showPremiumDialog() {
         if (isFinishing || isDestroyed) return
         if (isPremium()) return
-
         AlertDialog.Builder(this)
             .setTitle("Nâng cấp Premium")
-            .setMessage("Mở khóa Đèn Pin không giới hạn! Bạn hiện chỉ có thể dùng 15 giây mỗi lần mở ứng dụng.\n\nChọn gói:\n\n- Thuê theo Ngày: 15.000 VNĐ / ngày\n- Thuê theo Tháng: 99.000 VNĐ / tháng (Tiết kiệm)")
+            .setMessage("Mở khóa Đèn Pin không giới hạn! Bạn hiện chỉ có thể dùng 15 giây mỗi lần mở ứng dụng.\n\nChọn gói:\n\n- Thuê theo Ngày: 18.000 VNĐ / ngày\n- Thuê theo Tháng: 36.000 VNĐ / tháng (Tiết kiệm)")
             .setCancelable(true)
-            .setPositiveButton("Thuê 1 Tiếng") { dialog, _ ->
-                sharedPrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
+            .setPositiveButton("Thuê 1 Ngày") { dialog, _ ->
+                val oneDayMs = 24 * 60 * 60 * 1000L
+                sharedPrefs.edit().putLong(KEY_EXPIRY_TIME, System.currentTimeMillis() + oneDayMs).apply()
                 handler.removeCallbacks(limitFlashlightRunnable) 
-                txtStatus.text = "Đã mua Premium! Sử dụng trong 1 tiếng."
+                txtStatus.text = "Đã mua Premium 1 ngày!"
                 dialog.dismiss()
             }
-            .setNegativeButton("Thuê 1 Ngày") { dialog, _ ->
-                sharedPrefs.edit().putBoolean(KEY_IS_PREMIUM, true).apply()
+            .setNegativeButton("Thuê 1 Tháng") { dialog, _ ->
+                val oneMonthMs = 30L * 24 * 60 * 60 * 1000L
+                sharedPrefs.edit().putLong(KEY_EXPIRY_TIME, System.currentTimeMillis() + oneMonthMs).apply()
                 handler.removeCallbacks(limitFlashlightRunnable)
-                txtStatus.text = "Đã mua Premium! Sử dụng trong 1 ngày."
+                txtStatus.text = "Đã mua Premium 1 tháng!"
                 dialog.dismiss()
             }
             .setNeutralButton("Dùng miễn phí (15s)") { dialog, _ ->
@@ -209,21 +199,14 @@ class MainActivity : AppCompatActivity() {
         super.onPause()
         handler.removeCallbacks(limitFlashlightRunnable)
         if (isFlashOn) {
-            try {
-                 cameraManager.setTorchMode(cameraId, false)
-            } catch (e: Exception) {
-            }
+            try { cameraManager.setTorchMode(cameraId, false) } catch (e: Exception) {}
             isFlashOn = false
         }
     }
 
     override fun onResume() {
         super.onResume()
-        if (::btnFlash.isInitialized) {
-            updateUiForInitialState()
-        }
-        if (!isPremium()) {
-             showPremiumDialog()
-        }
+        if (::btnFlash.isInitialized) updateUiForInitialState()
+        if (!isPremium()) showPremiumDialog()
     }
 }
