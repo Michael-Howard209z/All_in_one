@@ -108,6 +108,9 @@ class MainActivity : BaseActivity() {
                         R.id.btnModeSlow -> "Slow"
                         R.id.btnModeFast -> "Fast"
                         R.id.btnModeSOS -> "SOS"
+                        R.id.btnModePolice -> "Police"
+                        R.id.btnModePulse -> "Pulse"
+                        R.id.btnModeDisco -> "Disco"
                         else -> "Normal"
                     }
                     // Nếu đèn đang bật, cập nhật ngay lập tức
@@ -149,13 +152,6 @@ class MainActivity : BaseActivity() {
             return
         }
 
-        val pattern = when (mode) {
-            "Slow" -> longArrayOf(500, 500) // 500ms bật, 500ms tắt
-            "Fast" -> longArrayOf(100, 100) // 100ms bật, 100ms tắt
-            "SOS" -> longArrayOf(200, 200, 200, 200, 200, 600, 600, 600, 600, 600, 600, 200, 200, 200, 200, 200, 1000)
-            else -> return
-        }
-
         var index = 0
         var flashState = true
 
@@ -163,7 +159,30 @@ class MainActivity : BaseActivity() {
             override fun run() {
                 try {
                     cameraManager.setTorchMode(cameraId, flashState)
-                    val delay = if (mode == "SOS") pattern[index % pattern.size] else pattern[0]
+                    
+                    val delay = when (mode) {
+                        "Slow" -> 500L
+                        "Fast" -> 100L
+                        "SOS" -> {
+                            val sosPattern = longArrayOf(200, 200, 200, 200, 200, 600, 600, 600, 600, 600, 600, 200, 200, 200, 200, 200, 1000)
+                            sosPattern[index % sosPattern.size]
+                        }
+                        "Police" -> {
+                            // Nháy liên tục 3 lần rồi nghỉ ngắn
+                            if (index % 8 < 6) 50L else 300L
+                        }
+                        "Pulse" -> {
+                            // Nhịp tim (Thình thịch ... Thình thịch)
+                            val pulsePattern = longArrayOf(100, 100, 100, 600)
+                            pulsePattern[index % pulsePattern.size]
+                        }
+                        "Disco" -> {
+                            // Nháy ngẫu nhiên hoặc hỗn hợp
+                            (30..200).random().toLong()
+                        }
+                        else -> 100L
+                    }
+                    
                     flashState = !flashState
                     index++
                     strobeHandler.postDelayed(this, delay)
@@ -240,7 +259,7 @@ class MainActivity : BaseActivity() {
         if (isPremium()) return
         AlertDialog.Builder(this)
             .setTitle("Nâng cấp Premium")
-            .setMessage("Mở khóa Đèn Pin không giới hạn và các chế độ nháy (SOS, Fast, Slow)!\n\nChọn gói:\n\n- Thuê theo Ngày: 18.000 VNĐ\n- Thuê theo Tháng: 36.000 VNĐ")
+            .setMessage("Mở khóa Đèn Pin không giới hạn và các chế độ nháy (SOS, Fast, Slow, Police, Disco...)!\n\nChọn gói:\n\n- Thuê theo Ngày: 18.000 VNĐ\n- Thuê theo Tháng: 36.000 VNĐ")
             .setCancelable(true)
             .setPositiveButton("Thuê 1 Ngày") { dialog, _ ->
                 val oneDayMs = 24 * 60 * 60 * 1000L

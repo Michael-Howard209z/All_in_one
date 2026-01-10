@@ -110,51 +110,77 @@
                     android:textColor="?attr/colorPrimary"
                     android:layout_marginBottom="8dp"/>
 
-                <com.google.android.material.button.MaterialButtonToggleGroup
-                    android:id="@+id/toggleGroupModes"
+                <HorizontalScrollView
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content"
-                    app:singleSelection="true"
-                    app:selectionRequired="true"
-                    app:checkedButton="@+id/btnModeNormal">
+                    android:scrollbars="none">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnModeNormal"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
+                    <com.google.android.material.button.MaterialButtonToggleGroup
+                        android:id="@+id/toggleGroupModes"
+                        android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Thường"
-                        android:textSize="12sp" />
+                        app:singleSelection="true"
+                        app:selectionRequired="true"
+                        app:checkedButton="@+id/btnModeNormal">
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnModeSlow"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Chậm"
-                        android:textSize="12sp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeNormal"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Thường"
+                            android:textSize="11sp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnModeFast"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="Nhanh"
-                        android:textSize="12sp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeSlow"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Chậm"
+                            android:textSize="11sp" />
 
-                    <com.google.android.material.button.MaterialButton
-                        android:id="@+id/btnModeSOS"
-                        style="@style/Widget.Material3.Button.OutlinedButton"
-                        android:layout_width="0dp"
-                        android:layout_height="wrap_content"
-                        android:layout_weight="1"
-                        android:text="SOS"
-                        android:textSize="12sp" />
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeFast"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Nhanh"
+                            android:textSize="11sp" />
 
-                </com.google.android.material.button.MaterialButtonToggleGroup>
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeSOS"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="SOS"
+                            android:textSize="11sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModePolice"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Cảnh Sát"
+                            android:textSize="11sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModePulse"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Nhịp Tim"
+                            android:textSize="11sp" />
+
+                        <com.google.android.material.button.MaterialButton
+                            android:id="@+id/btnModeDisco"
+                            style="@style/Widget.Material3.Button.OutlinedButton"
+                            android:layout_width="wrap_content"
+                            android:layout_height="wrap_content"
+                            android:text="Disco"
+                            android:textSize="11sp" />
+
+                    </com.google.android.material.button.MaterialButtonToggleGroup>
+                </HorizontalScrollView>
             </LinearLayout>
         </com.google.android.material.card.MaterialCardView>
 
