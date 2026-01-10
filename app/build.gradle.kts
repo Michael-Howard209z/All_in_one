@@ -26,6 +26,7 @@ android {
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"
             )
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
     compileOptions {
@@ -43,11 +44,12 @@ dependencies {
     implementation(libs.material)
     implementation(libs.androidx.activity)
     implementation(libs.androidx.constraintlayout)
+    implementation(libs.androidx.viewpager2)
     testImplementation(libs.junit)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
 // Thư viện Material Components cho Android
-    implementation("com.google.android.material:material:1.11.0")
+    implementation("com.google.android.material:material:1.13.0")
 // ConstraintLayout để hỗ trợ bố cục
-    implementation("androidx.constraintlayout:constraintlayout:2.1.4")
+    implementation("androidx.constraintlayout:constraintlayout:2.2.1")
 }
