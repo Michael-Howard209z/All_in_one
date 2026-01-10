@@ -12,6 +12,7 @@ import android.view.animation.OvershootInterpolator
 import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import com.google.android.material.button.MaterialButton
+import com.google.android.material.button.MaterialButtonToggleGroup
 import com.google.android.material.card.MaterialCardView
 import java.lang.Exception
 
@@ -30,6 +31,11 @@ class MainActivity : BaseActivity() {
     private lateinit var btnCloseInfo: MaterialButton
     private lateinit var viewDim: View
 
+    // Logic nháy đèn (Strobe)
+    private var strobeHandler = Handler(Looper.getMainLooper())
+    private var strobeRunnable: Runnable? = null
+    private var currentMode = "Normal"
+    private lateinit var toggleGroupModes: MaterialButtonToggleGroup
 
     // Các trường và hằng số cho logic Premium
     private lateinit var sharedPrefs: SharedPreferences
@@ -66,6 +72,7 @@ class MainActivity : BaseActivity() {
         btnCloseInfo = findViewById(R.id.btnCloseInfo)
         viewDim = findViewById(R.id.viewDim)
         btnSettings = findViewById(R.id.btnSettings)
+        toggleGroupModes = findViewById(R.id.toggleGroupModes)
 
         // Khởi tạo Camera
         cameraManager = getSystemService(CAMERA_SERVICE) as CameraManager
@@ -87,6 +94,29 @@ class MainActivity : BaseActivity() {
 
         btnFlash.setOnClickListener {
             toggleFlashlight(!isFlashOn)
+        }
+
+        // Xử lý chọn chế độ nháy
+        toggleGroupModes.addOnButtonCheckedListener { _, checkedId, isChecked ->
+            if (isChecked) {
+                if (!isPremium() && checkedId != R.id.btnModeNormal) {
+                    // Nếu không phải Premium mà chọn chế độ nháy -> Hiện Dialog và reset về Normal
+                    toggleGroupModes.check(R.id.btnModeNormal)
+                    showPremiumDialog()
+                } else {
+                    currentMode = when (checkedId) {
+                        R.id.btnModeSlow -> "Slow"
+                        R.id.btnModeFast -> "Fast"
+                        R.id.btnModeSOS -> "SOS"
+                        else -> "Normal"
+                    }
+                    // Nếu đèn đang bật, cập nhật ngay lập tức
+                    if (isFlashOn) {
+                        stopStrobe()
+                        startStrobe(currentMode)
+                    }
+                }
+            }
         }
         
         // Logic cho nút Premium trên trang chính
@@ -113,6 +143,44 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    private fun startStrobe(mode: String) {
+        if (mode == "Normal") {
+            try { cameraManager.setTorchMode(cameraId, true) } catch (e: Exception) {}
+            return
+        }
+
+        val pattern = when (mode) {
+            "Slow" -> longArrayOf(500, 500) // 500ms bật, 500ms tắt
+            "Fast" -> longArrayOf(100, 100) // 100ms bật, 100ms tắt
+            "SOS" -> longArrayOf(200, 200, 200, 200, 200, 600, 600, 600, 600, 600, 600, 200, 200, 200, 200, 200, 1000)
+            else -> return
+        }
+
+        var index = 0
+        var flashState = true
+
+        strobeRunnable = object : Runnable {
+            override fun run() {
+                try {
+                    cameraManager.setTorchMode(cameraId, flashState)
+                    val delay = if (mode == "SOS") pattern[index % pattern.size] else pattern[0]
+                    flashState = !flashState
+                    index++
+                    strobeHandler.postDelayed(this, delay)
+                } catch (e: Exception) {
+                    stopStrobe()
+                }
+            }
+        }
+        strobeHandler.post(strobeRunnable!!)
+    }
+
+    private fun stopStrobe() {
+        strobeRunnable?.let { strobeHandler.removeCallbacks(it) }
+        strobeRunnable = null
+        try { cameraManager.setTorchMode(cameraId, false) } catch (e: Exception) {}
+    }
+
     private fun showInfoPanel() {
         viewDim.visibility = View.VISIBLE
         viewDim.animate().alpha(1f).setDuration(400).start()
@@ -128,6 +196,7 @@ class MainActivity : BaseActivity() {
         isFlashOn = false
         btnFlash.text = "BẬT"
         btnFlash.setIconResource(R.drawable.ic_flash_off)
+        toggleGroupModes.check(R.id.btnModeNormal)
         
         if (isPremium()) {
             txtStatus.text = "Premium đã được kích hoạt"
@@ -145,23 +214,21 @@ class MainActivity : BaseActivity() {
     private fun toggleFlashlight(on: Boolean) {
         if (on == isFlashOn) return
         isFlashOn = on
-        try {
-            cameraManager.setTorchMode(cameraId, isFlashOn)
-        } catch (e: Exception) {
-            isFlashOn = !on
-            txtStatus.text = "Lỗi: Không thể điều khiển đèn pin: ${e.message}"
-            return
-        }
-
+        
         if (isFlashOn) {
             btnFlash.text = "TẮT"
             btnFlash.setIconResource(R.drawable.ic_flash_on)
             txtStatus.text = "ĐÈN PIN ĐANG BẬT"
+            
+            // Bắt đầu nháy theo chế độ đã chọn
+            startStrobe(currentMode)
+
             if (!isPremium()) {
                 handler.postDelayed(limitFlashlightRunnable, FLASH_LIMIT_MS)
             }
         } else {
             handler.removeCallbacks(limitFlashlightRunnable)
+            stopStrobe()
             btnFlash.text = "BẬT"
             btnFlash.setIconResource(R.drawable.ic_flash_off)
             txtStatus.text = "Đèn pin đang tắt"
@@ -173,7 +240,7 @@ class MainActivity : BaseActivity() {
         if (isPremium()) return
         AlertDialog.Builder(this)
             .setTitle("Nâng cấp Premium")
-            .setMessage("Mở khóa Đèn Pin không giới hạn! Bạn hiện chỉ có thể dùng 15 giây mỗi lần mở ứng dụng.\n\nChọn gói:\n\n- Thuê theo Ngày: 18.000 VNĐ / ngày\n- Thuê theo Tháng: 36.000 VNĐ / tháng (Tiết kiệm)")
+            .setMessage("Mở khóa Đèn Pin không giới hạn và các chế độ nháy (SOS, Fast, Slow)!\n\nChọn gói:\n\n- Thuê theo Ngày: 18.000 VNĐ\n- Thuê theo Tháng: 36.000 VNĐ")
             .setCancelable(true)
             .setPositiveButton("Thuê 1 Ngày") { dialog, _ ->
                 val oneDayMs = 24 * 60 * 60 * 1000L
@@ -199,8 +266,7 @@ class MainActivity : BaseActivity() {
         super.onPause()
         handler.removeCallbacks(limitFlashlightRunnable)
         if (isFlashOn) {
-            try { cameraManager.setTorchMode(cameraId, false) } catch (e: Exception) {}
-            isFlashOn = false
+            toggleFlashlight(false)
         }
     }
 
